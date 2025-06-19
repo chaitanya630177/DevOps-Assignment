@@ -1,0 +1,73 @@
+'''groovy
+pipeline {
+    agent any
+    environment {
+        AWS_REGION = 'us-east-1'
+        ECR_REGISTRY = credentials('ecr-registry') // Jenkins credential ID for ECR registry URL
+        ECR_REPOSITORY = 'chaydemo-infra-repo'
+        IMAGE_TAG = "${env.GIT_COMMIT}"
+        LATEST_TAG = 'latest'
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+    }
+    stages {
+        stage('Test') {
+            steps {
+                dir('app') {
+                    sh 'npm install'
+                    sh 'npm test'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .'
+                sh 'docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG'
+                sh 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY'
+                sh 'docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG'
+                sh 'docker push $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG'
+                script {
+                    // Store previous image tag for rollback
+                    def previousTag = sh(script: "docker images $ECR_REGISTRY/$ECR_REPOSITORY --format '{{.Tag}}' | grep -v $IMAGE_TAG | head -n 1", returnStdout: true).trim()
+                    env.PREVIOUS_IMAGE_TAG = previousTag ?: 'latest'
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                dir('.') {
+                    sh 'terraform init'
+                    sh ' missão plan -out=tfplan'
+                    script {
+                        try {
+                            sh 'terraform apply -auto-approve tfplan'
+                            // Health check (simplified: check ALB response)
+                            sh "curl --fail http://$(terraform output -raw alb_dns_name) || exit 1"
+                        } catch (Exception e) {
+                            echo "Deployment failed: ${e.getMessage()}"
+                            stage('Rollback') {
+                                steps {
+                                    echo "Rolling back to previous image tag: ${env.PREVIOUS_IMAGE_TAG}"
+                                    // Update user_data.sh with previous tag
+                                    sh """
+                                        sed -i 's|${ECR_REGISTRY}/${ECR_REPOSITORY}:${LATEST_TAG}|${ECR_REGISTRY}/${ECR_REPOSITORY}:${env.PREVIOUS_IMAGE_TAG}|' scripts/user_data.sh
+                                        terraform init
+                                        terraform apply -auto-approve
+                                    """
+                                }
+                            }
+                            error "Deployment failed, rollback completed"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            sh 'docker system prune -f'
+            cleanWs()
+        }
+    }
+}
+```
