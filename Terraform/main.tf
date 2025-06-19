@@ -1,4 +1,4 @@
-in configuration tying all modules together
+#main configuration tying all modules together
 provider "aws" {
   region = var.region
 }
