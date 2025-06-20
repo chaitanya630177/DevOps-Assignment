@@ -65,4 +65,8 @@ module "monitoring" {
   alb_arn         = module.alb.alb_arn
   rds_identifier  = module.rds.rds_identifier
 }
-```
+
+module "logging" {
+  source       = "./modules/logging"
+  project_name = var.project_name
+}
