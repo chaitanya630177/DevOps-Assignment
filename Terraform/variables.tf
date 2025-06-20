@@ -1,3 +1,4 @@
+'''hcl
 variable "region" {
   description = "AWS region"
   type        = string
@@ -14,12 +15,12 @@ variable "vpc_cidr" {
 }
 
 variable "public_subnet_cidrs" {
-  description = "List of CIDR blocks for public subnets"
+  description = "List of public subnet CIDRs"
   type        = list(string)
 }
 
 variable "private_subnet_cidrs" {
-  description = "List of CIDR blocks for private subnets"
+  description = "List of private subnet CIDRs"
   type        = list(string)
 }
 
@@ -54,28 +55,43 @@ variable "db_instance_class" {
 }
 
 variable "db_allocated_storage" {
-  description = "Allocated storage for RDS (GB)"
+  description = "Allocated storage for RDS"
   type        = number
 }
 
 variable "db_engine_version" {
-  description = "Database engine version"
+  description = "RDS engine version"
   type        = string
 }
 
 variable "db_username" {
-  description = "Database username"
+  description = "RDS database username"
   type        = string
-  sensitive   = true
 }
 
 variable "db_password" {
-  description = "Database password"
+  description = "RDS database password (stored in Parameter Store)"
   type        = string
   sensitive   = true
 }
 
 variable "db_name" {
-  description = "Database name"
+  description = "RDS database name"
   type        = string
 }
+
+variable "domain_name" {
+  description = "Domain name for ACM certificate"
+  type        = string
+}
+
+variable "allowed_ssh_ip" {
+  description = "CIDR block allowed for SSH access"
+  type        = string
+}
+
+variable "alarm_email" {
+  description = "Email for SNS notifications"
+  type        = string
+}
+```

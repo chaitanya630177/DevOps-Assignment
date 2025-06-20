@@ -56,3 +56,13 @@ module "rds" {
   db_password           = var.db_password
   db_name               = var.db_name
 }
+
+module "monitoring" {
+  source          = "./modules/monitoring"
+  project_name    = var.project_name
+  alarm_email     = var.alarm_email
+  asg_name        = module.ec2_asg.asg_name
+  alb_arn         = module.alb.alb_arn
+  rds_identifier  = module.rds.rds_identifier
+}
+```

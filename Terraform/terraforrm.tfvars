@@ -14,3 +14,7 @@ db_engine_version     = "15.0"
 db_username           = "admin"
 db_password           = "chay"
 db_name               = "chaitu"
+domain_name           = "app.com"
+allowed_ssh_ip        = "203.0.113.1/32"
+alarm_email           = "vchaitanya4545@gmail.com.com"
+
