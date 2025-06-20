@@ -35,7 +35,9 @@ resource "aws_launch_template" "main" {
   name          = "${var.project_name}-lt"
   image_id      = jsondecode(data.aws_ssm_parameter.ecs_optimized_ami.value)["image_id"]
   instance_type = var.instance_type
-  user_data     = base64encode(file("${path.module}/../../scripts/user_data.sh"))
+  user_data     = base64encode(templatefile("${path.module}/../../scripts/user_data.sh", {
+    log_group_name = var.log_group_name
+  }))
   iam_instance_profile {
     arn = var.ec2_instance_profile_arn
   }
@@ -83,5 +85,9 @@ resource "aws_autoscaling_policy" "cpu_scaling" {
     }
     target_value = 50.0
   }
+}
+
+output "asg_name" {
+  value = aws_autoscaling_group.main.name
 }
 ```
