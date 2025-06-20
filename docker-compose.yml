@@ -7,24 +7,42 @@ services:
                         - "3000:3000"
                               environment:
                                       - NODE_ENV=development
-                                          db:
-                                                image: postgres:15
-                                                      environment:
-                                                              - POSTGRES_USER=admin
-                                                                      - POSTGRES_PASSWORD=chay
-                                                                              - POSTGRES_DB=chaydb
-                                                                                    ports:
-                                                                                            - "5432:5432"
-                                                                                                prometheus:
-                                                                                                      image: prom/prometheus:v2.30.3
-                                                                                                            volumes:
-                                                                                                                    - ./prometheus.yml:/etc/prometheus/prometheus.yml
-                                                                                                                          ports:
-                                                                                                                                  - "9090:9090"
-                                                                                                                                      grafana:
-                                                                                                                                            image: grafana/grafana:8.2.0
-                                                                                                                                                  ports:
-                                                                                                                                                          - "3001:3000"
-                                                                                                                                                                environment:
-                                                                                                                                                                        - GF_SECURITY_ADMIN_PASSWORD=admin
-                                                                                                                                                                          ```
+                                            logging:
+                                                    driver: "json-file"
+                                                            options:
+                                                                      max-size: "10m"
+                                                                                max-file: "3"
+                                                                                    db:
+                                                                                          image: postgres:15
+                                                                                                environment:
+                                                                                                        - POSTGRES_USER=admin
+                                                                                                                - POSTGRES_PASSWORD=chay
+                                                                                                                        - POSTGRES_DB=chaydb
+                                                                                                                              ports:
+                                                                                                                                      - "5432:5432"
+                                                                                                                                          prometheus:
+                                                                                                                                                image: prom/prometheus:v2.30.3
+                                                                                                                                                      volumes:
+                                                                                                                                                              - ./prometheus.yml:/etc/prometheus/prometheus.yml
+                                                                                                                                                                    ports:
+                                                                                                                                                                            - "9090:9090"
+                                                                                                                                                                                grafana:
+                                                                                                                                                                                      image: grafana/grafana:8.2.0
+                                                                                                                                                                                            ports:
+                                                                                                                                                                                                    - "3001:3000"
+                                                                                                                                                                                                          environment:
+                                                                                                                                                                                                                  - GF_SECURITY_ADMIN_PASSWORD=admin
+                                                                                                                                                                                                                      elasticsearch:
+                                                                                                                                                                                                                            image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
+                                                                                                                                                                                                                                  environment:
+                                                                                                                                                                                                                                          - discovery.type=single-node
+                                                                                                                                                                                                                                                  - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+                                                                                                                                                                                                                                                        ports:
+                                                                                                                                                                                                                                                                - "9200:9200"
+                                                                                                                                                                                                                                                                    kibana:
+                                                                                                                                                                                                                                                                          image: docker.elastic.co/kibana/kibana:7.14.0
+                                                                                                                                                                                                                                                                                ports:
+                                                                                                                                                                                                                                                                                        - "5601:5601"
+                                                                                                                                                                                                                                                                                              depends_on:
+                                                                                                                                                                                                                                                                                                      - elaisticsearch
+                                                                                                                                                                                                                                                                                                        ```
